@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="az">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>E-Global CV Group — Admin Panel</title>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#f4f6fa;color:#172033}header{background:#071f49;color:#fff;padding:22px 28px}main{max-width:1100px;margin:auto;padding:24px}.tabs{display:flex;gap:10px;margin-bottom:18px}button{border:0;border-radius:9px;padding:11px 16px;font-weight:700;cursor:pointer}.tab{background:#fff}.active{background:#0b3d91!important;color:#fff}.card{background:#fff;border:1px solid #e3e7ee;border-radius:16px;padding:20px;margin-bottom:18px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.full{grid-column:1/-1}label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}input,textarea,select{width:100%;padding:11px;border:1px solid #d0d5dd;border-radius:9px;font:inherit}textarea{min-height:120px}.primary{background:#0b3d91;color:#fff}.green{background:#079455;color:#fff}.danger{background:#fee4e2;color:#b42318}.gray{background:#eef2f6}.list{display:grid;gap:10px}.item{border:1px solid #e3e7ee;border-radius:12px;padding:14px;display:flex;justify-content:space-between;gap:15px;align-items:center}.muted{color:#667085;font-size:13px}.badge{padding:4px 8px;border-radius:99px;font-size:11px;font-weight:800}.on{background:#dcfae6;color:#067647}.off{background:#f2f4f7;color:#475467}.hidden{display:none}.msg{padding:11px;border-radius:9px;margin-bottom:14px;background:#ecfdf3;color:#027a48}.err{background:#fef3f2;color:#b42318}@media(max-width:700px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.item{flex-direction:column;align-items:flex-start}}
+</style>
+</head>
+<body>
+<header><b style="font-size:24px">E-Global CV Group</b><div>Birbaşa Admin Panel</div></header>
+<main><div id="msg"></div>
+<div class="tabs"><button id="tv" class="tab active">Vakansiyalar</button><button id="tc" class="tab">CV nümunələri</button></div>
+
+<section id="vs">
+<div class="card"><h2>Yeni vakansiya əlavə et</h2>
+<form id="vf" class="grid">
+<div><label>Vəzifə</label><input id="title" required></div>
+<div><label>Şirkət</label><input id="company" required></div>
+<div><label>Şəhər</label><input id="city"></div>
+<div><label>Kateqoriya</label><input id="category"></div>
+<div><label>Maaş</label><input id="salary"></div>
+<div><label>İş qrafiki</label><input id="schedule"></div>
+<div><label>WhatsApp</label><input id="phone"></div>
+<div><label>Status</label><select id="active"><option value="true">Aktiv</option><option value="false">Deaktiv</option></select></div>
+<div class="full"><label>Təsvir</label><textarea id="desc" required></textarea></div>
+<div class="full"><button class="primary">Vakansiyanı əlavə et</button></div>
+</form></div>
+<div class="card"><h2>Vakansiyalar</h2><div id="vl" class="list"></div></div>
+</section>
+
+<section id="cs" class="hidden">
+<div class="card"><h2>Yeni CV nümunəsi</h2>
+<form id="cf" class="grid">
+<div><label>CV adı</label><input id="ctitle" required></div>
+<div><label>Peşə</label><input id="profession" required></div>
+<div><label>Qiymət</label><input id="price"></div>
+<div><label>Status</label><select id="cactive"><option value="true">Aktiv</option><option value="false">Deaktiv</option></select></div>
+<div class="full"><label>Şəkil</label><input id="image" type="file" accept="image/*" required></div>
+<div class="full"><label>Təsvir</label><textarea id="cdesc" required></textarea></div>
+<div class="full"><button class="green">CV-ni əlavə et</button></div>
+</form></div>
+<div class="card"><h2>CV nümunələri</h2><div id="cl" class="list"></div></div>
+</section>
+</main>
+
+<script type="module">
+import{createClient}from"https://esm.sh/@supabase/supabase-js@2";
+const db=createClient("https://guxpboapzdhdhkjhgfbr.supabase.co","sb_publishable_AkDIpLiU4kn3ab0RHFK1Zg_jH7KUC7R");
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+function msg(t,ok=true){$("msg").innerHTML=t?`<div class="msg ${ok?"":"err"}>${esc(t)}</div>`:"";setTimeout(()=>$("msg").innerHTML="",4000)}
+async function load(){
+ let v=await db.from("vacancies").select("*").order("created_at",{ascending:false});
+ if(v.error){msg("Supabase: "+v.error.message,false);return}
+ $("vl").innerHTML=(v.data||[]).map(x=>`<div class="item"><div><b>${esc(x.title)}</b><div class="muted">${esc(x.company)} · ${esc(x.city||"")} · ${x.views||0} baxış</div><span class="badge ${x.active?"on":"off"}">${x.active?"AKTİV":"DEAKTİV"}</span></div><div><button class="gray" onclick="toggleV('${x.id}',${!x.active})">${x.active?"Deaktiv et":"Aktiv et"}</button> <button class="danger" onclick="deleteV('${x.id}')">Sil</button></div></div>`).join("")||"<div class='muted'>Vakansiya yoxdur.</div>";
+ let c=await db.from("cv_samples").select("*").order("created_at",{ascending:false});
+ if(c.error){msg("Supabase: "+c.error.message,false);return}
+ $("cl").innerHTML=(c.data||[]).map(x=>`<div class="item"><div><b>${esc(x.title)}</b><div class="muted">${esc(x.profession||"")} · ${esc(x.price||"")}</div><span class="badge ${x.active?"on":"off"}">${x.active?"AKTİV":"DEAKTİV"}</span></div><div><button class="gray" onclick="toggleC('${x.id}',${!x.active})">${x.active?"Deaktiv et":"Aktiv et"}</button> <button class="danger" onclick="deleteC('${x.id}')">Sil</button></div></div>`).join("")||"<div class='muted'>CV yoxdur.</div>";
+}
+$("vf").onsubmit=async e=>{e.preventDefault();let{error}=await db.from("vacancies").insert({title:$("title").value.trim(),company:$("company").value.trim(),city:$("city").value.trim(),category:$("category").value.trim(),salary:$("salary").value.trim(),work_schedule:$("schedule").value.trim(),whatsapp:$("phone").value.replace(/\D/g,""),description:$("desc").value.trim(),views:0,active:$("active").value==="true"});if(error)msg(error.message,false);else{e.target.reset();msg("Vakansiya əlavə edildi");load()}};
+$("cf").onsubmit=async e=>{e.preventDefault();let f=$("image").files[0];if(!f)return;let path=crypto.randomUUID()+"."+f.name.split(".").pop();let up=await db.storage.from("cv-images").upload(path,f,{contentType:f.type});if(up.error){msg(up.error.message,false);return}let url=db.storage.from("cv-images").getPublicUrl(path).data.publicUrl;let{error}=await db.from("cv_samples").insert({title:$("ctitle").value.trim(),profession:$("profession").value.trim(),price:$("price").value.trim(),description:$("cdesc").value.trim(),image_path:path,image_url:url,active:$("cactive").value==="true"});if(error){msg(error.message,false)}else{e.target.reset();msg("CV əlavə edildi");load()}};
+window.toggleV=async(id,a)=>{let{error}=await db.from("vacancies").update({active:a}).eq("id",id);if(error)msg(error.message,false);load()};
+window.deleteV=async id=>{if(confirm("Vakansiya silinsin?")){let{error}=await db.from("vacancies").delete().eq("id",id);if(error)msg(error.message,false);load()}};
+window.toggleC=async(id,a)=>{let{error}=await db.from("cv_samples").update({active:a}).eq("id",id);if(error)msg(error.message,false);load()};
+window.deleteC=async id=>{if(confirm("CV silinsin?")){let{error}=await db.from("cv_samples").delete().eq("id",id);if(error)msg(error.message,false);load()}};
+$("tv").onclick=()=>{$("vs").classList.remove("hidden");$("cs").classList.add("hidden");$("tv").classList.add("active");$("tc").classList.remove("active")};
+$("tc").onclick=()=>{$("vs").classList.add("hidden");$("cs").classList.remove("hidden");$("tc").classList.add("active");$("tv").classList.remove("active")};
+load();
+</script></body></html>
