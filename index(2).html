@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="az">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>E-Global CV Group</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#101828}
+header{background:#071f49;color:#fff;padding:16px 20px;position:sticky;top:0;z-index:5}.nav{max-width:1180px;margin:auto;display:flex;justify-content:space-between;align-items:center}.logo{font-size:22px;font-weight:900}.logo span{color:#63e6be}nav a{color:#fff;text-decoration:none;margin-left:18px;font-weight:700}
+.hero{background:linear-gradient(135deg,#071f49,#0b3d91,#16a085);color:#fff}.hero-in{max-width:1180px;margin:auto;padding:55px 20px}.hero h1{font-size:45px;max-width:760px}.hero p{font-size:18px;line-height:1.6;max-width:700px}.btn{display:inline-block;border:0;border-radius:10px;padding:11px 16px;font-weight:800;text-decoration:none;cursor:pointer}.green{background:#16a085;color:#fff}.white{background:#fff;color:#0b3d91}
+.container{max-width:1180px;margin:auto;padding:30px 20px}.controls{display:flex;gap:10px;margin:18px 0;flex-wrap:wrap}.input,.select{padding:12px;border:1px solid #d0d5dd;border-radius:10px;font:inherit;background:#fff}.input{flex:1;min-width:230px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{background:#fff;border:1px solid #e4e7ec;border-radius:16px;padding:17px;box-shadow:0 4px 16px #1018280c}.tag{display:inline-block;background:#edf4ff;color:#164b9b;padding:5px 9px;border-radius:7px;font-size:12px;font-weight:800}.meta{color:#667085;line-height:1.8;font-size:14px}.card p{line-height:1.55}.cv{width:100%;height:250px;object-fit:cover;border-radius:12px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.empty{text-align:center;background:#fff;padding:35px;border-radius:15px;color:#667085;border:1px dashed #cbd5e1}.modal{position:fixed;inset:0;background:#0009;display:flex;align-items:center;justify-content:center;padding:18px;z-index:20}.modal-box{background:#fff;max-width:750px;width:100%;max-height:90vh;overflow:auto;padding:24px;border-radius:18px}.close{float:right;border:0;background:#eee;border-radius:50%;width:34px;height:34px;cursor:pointer}
+@media(max-width:800px){.grid{grid-template-columns:1fr 1fr}.hero h1{font-size:36px}}@media(max-width:550px){.grid{grid-template-columns:1fr}.hero h1{font-size:30px}nav a{font-size:13px;margin-left:7px}}
+</style>
+</head>
+<body>
+<header><div class="nav"><div class="logo">E-Global <span>CV Group</span></div><nav><a href="#vac">Vakansiyalar</a><a href="#cv">CV nümunələri</a></nav></div></header>
+<section class="hero"><div class="hero-in"><b>GLOBAL CV GROUP</b><h1>Vakansiyalar və peşəkar CV nümunələri bir platformada.</h1><p>Vakansiyalara baxın, uyğun işi tapın və peşəkar CV hazırlanması üçün birbaşa WhatsApp-dan müraciət edin.</p><a class="btn green" href="#vac">Vakansiyalara bax</a> <a class="btn white" href="#cv">CV nümunələri</a></div></section>
+<main class="container">
+<section id="vac"><h2>Aktiv vakansiyalar</h2><p>Ən son yerləşdirilən vakansiyalar</p><div class="controls"><input id="search" class="input" placeholder="Vəzifə, şirkət, şəhər..."><select id="cat" class="select"><option value="">Bütün kateqoriyalar</option></select></div><div id="vacGrid" class="grid"></div></section>
+<section id="cv" style="margin-top:50px"><h2>CV nümunələri</h2><p>Admin paneldən əlavə olunan aktiv CV-lər</p><div class="controls"><input id="cvSearch" class="input" placeholder="CV və peşə üzrə axtar..."></div><div id="cvGrid" class="grid"></div></section>
+</main>
+<footer style="background:#0b1220;color:#fff;padding:28px 20px;margin-top:40px"><div class="container" style="padding:0;display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap"><b>E-Global CV Group</b><span>Vakansiya • CV • Karyera</span><span>WhatsApp: 0516410799</span></div></footer>
+<div id="modal" class="modal" style="display:none"><div class="modal-box"><button class="close" onclick="closeModal()">×</button><div id="modalBody"></div></div></div>
+<script type="module">
+import{createClient}from"https://esm.sh/@supabase/supabase-js@2";
+const db=createClient("https://guxpboapzdhdhkjhgfbr.supabase.co","sb_publishable_AkDIpLiU4kn3ab0RHFK1Zg_jH7KUC7R"),PHONE="994516410799";
+const $=id=>document.getElementById(id),esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+const wa=(t,p=PHONE)=>"https://wa.me/"+String(p).replace(/\D/g,"")+"?text="+encodeURIComponent(t);
+async function loadVac(){
+ const q=$("search").value.trim(),c=$("cat").value;
+ let z=db.from("vacancies").select("*").eq("active",true).order("created_at",{ascending:false});
+ if(q)z=z.or(`title.ilike.%${q}%,company.ilike.%${q}%,city.ilike.%${q}%,description.ilike.%${q}%`);
+ if(c)z=z.eq("category",c);
+ const {data,error}=await z;
+ if(error){$("vacGrid").innerHTML='<div class="empty">Vakansiyalar yüklənmədi.</div>';return}
+ const cats=[...new Set(data.map(x=>x.category).filter(Boolean))];
+ $("cat").innerHTML='<option value="">Bütün kateqoriyalar</option>'+cats.map(x=>`<option value="${esc(x)}" ${x===c?"selected":""}>${esc(x)}</option>`).join("");
+ $("vacGrid").innerHTML=data.length?data.map(x=>`<article class="card"><span class="tag">${esc(x.category||"Vakansiya")}</span><h3>${esc(x.title)}</h3><div class="meta"><b>${esc(x.company)}</b><br>📍 ${esc(x.city||"")}<br>💰 ${esc(x.salary||"Razılaşma yolu ilə")}<br>🕐 ${esc(x.work_schedule||"")}<br>👁️ ${x.views||0} baxış</div><p>${esc(x.description)}</p><div class="actions"><button class="btn" onclick="openVac('${x.id}')">Ətraflı</button><a class="btn green" target="_blank" href="${wa("Salam.\n"+x.title+" vakansiyası ilə maraqlanıram.",x.whatsapp||PHONE)}">Müraciət et</a></div></article>`).join(""):'<div class="empty">Aktiv vakansiya yoxdur.</div>';
+}
+async function loadCV(){
+ const q=$("cvSearch").value.trim();let z=db.from("cv_samples").select("*").eq("active",true).order("created_at",{ascending:false});
+ if(q)z=z.or(`title.ilike.%${q}%,profession.ilike.%${q}%,description.ilike.%${q}%`);
+ const {data,error}=await z;if(error){$("cvGrid").innerHTML='<div class="empty">CV nümunələri yüklənmədi.</div>';return}
+ $("cvGrid").innerHTML=data.length?data.map(x=>`<article class="card">${x.image_url?`<img class="cv" src="${esc(x.image_url)}">`:""}<span class="tag">${esc(x.profession||"CV")}</span><h3>${esc(x.title)}</h3><div class="meta">💳 ${esc(x.price||"Qiymət üçün əlaqə")}</div><p>${esc(x.description)}</p><div class="actions"><button class="btn" onclick="openCV('${x.id}')">Nümunəyə bax</button><a class="btn green" target="_blank" href="${wa("Salam.\n"+x.title+" CV xidmətini sifariş etmək istəyirəm.")}">Sifariş et</a></div></article>`).join(""):'<div class="empty">CV nümunəsi yoxdur.</div>';
+}
+window.openVac=async id=>{const r=await db.from("vacancies").select("*").eq("id",id).single();if(!r.data)return;const x=r.data;await db.from("vacancies").update({views:(x.views||0)+1}).eq("id",id);$("modalBody").innerHTML=`<h2>${esc(x.title)}</h2><p><b>${esc(x.company)}</b> • ${esc(x.city||"")}</p><p>${esc(x.description)}</p><p>💰 ${esc(x.salary||"Razılaşma yolu ilə")}<br>🕐 ${esc(x.work_schedule||"")}<br>👁️ ${(x.views||0)+1} baxış</p><a class="btn green" target="_blank" href="${wa("Salam.\n"+x.title+" vakansiyasına müraciət etmək istəyirəm.",x.whatsapp||PHONE)}">WhatsApp ilə müraciət</a>`;$("modal").style.display="flex";loadVac()};
+window.openCV=async id=>{const r=await db.from("cv_samples").select("*").eq("id",id).single();if(!r.data)return;const x=r.data;$("modalBody").innerHTML=`<h2>${esc(x.title)}</h2>${x.image_url?`<img src="${esc(x.image_url)}" style="width:100%;border-radius:12px">`:""}<p><b>${esc(x.profession||"")}</b></p><p>${esc(x.description||"")}</p><p>${esc(x.price||"Qiymət üçün əlaqə")}</p><a class="btn green" target="_blank" href="${wa("Salam.\n"+x.title+" CV xidmətini sifariş etmək istəyirəm.")}">0516410799 — WhatsApp</a>`;$("modal").style.display="flex"};
+window.closeModal=()=>{$("modal").style.display="none"};
+$("search").oninput=loadVac;$("cat").onchange=loadVac;$("cvSearch").oninput=loadCV;loadVac();loadCV();
+</script>
+</body></html>
